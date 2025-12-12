@@ -1,0 +1,4 @@
+,f1_score,f1_score,f1_score,f1_score,f1_score,precision,precision,precision,precision,recall,recall,recall,recall,iou,iou,iou,iou
+,mean,std,min,max,count,mean,std,min,max,mean,std,min,max,mean,std,min,max
+method,,,,,,,,,,,,,,,,,
+cva,0.465,,0.465,0.465,1,0.49,,0.49,0.49,0.442,,0.442,0.442,0.303,,0.303,0.303

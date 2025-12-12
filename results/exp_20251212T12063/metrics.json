@@ -1,0 +1,14 @@
+{
+  "method": "cva",
+  "timestamp": "2025-12-12T12:06:36.174333",
+  "true_positives": 6195,
+  "false_positives": 6446,
+  "false_negatives": 7805,
+  "true_negatives": 241698,
+  "total_pixels": 262144,
+  "precision": 0.49007198797563484,
+  "recall": 0.4425,
+  "f1_score": 0.46507263240869334,
+  "iou": 0.30299325051354786,
+  "accuracy": 0.9456367492675781
+}

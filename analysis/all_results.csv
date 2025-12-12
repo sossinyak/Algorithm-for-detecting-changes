@@ -1,0 +1,2 @@
+experiment,method,timestamp,true_positives,false_positives,false_negatives,true_negatives,total_pixels,precision,recall,f1_score,iou,accuracy
+exp_20251212T12063,cva,2025-12-12T12:06:36.174333,6195,6446,7805,241698,262144,0.49007198797563484,0.4425,0.46507263240869334,0.30299325051354786,0.9456367492675781

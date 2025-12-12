@@ -105,29 +105,26 @@ class ChangeDetectionPipeline:
     
     def _load_ground_truth(self, gt_path: str, target_shape: Tuple) -> np.ndarray:
         """Загрузка ground truth маски"""
-        print(f"   📂 Загрузка ground truth: {gt_path}")
-        print(f"   📂 Файл существует: {Path(gt_path).exists()}")
-        
         gt = self._load_image(gt_path)
-        print(f"   📂 Загружен ground truth: shape={gt.shape}, "
+        print(f"Загружен ground truth: shape={gt.shape}, "
               f"min={gt.min()}, max={gt.max()}, "
               f"изменений={np.sum(gt > 0)} пикселей")
         
         # Приведение к бинарному формату
         if gt.max() > 1:
-            print(f"   📂 Конвертация в бинарный формат...")
+            print(f"Конвертация в бинарный формат")
             gt_binary = (gt > 127).astype(np.uint8) * 255
-            print(f"   📂 После бинаризации: min={gt_binary.min()}, "
+            print(f"После бинаризации: min={gt_binary.min()}, "
                   f"max={gt_binary.max()}, "
                   f"изменений={np.sum(gt_binary > 0)} пикселей")
             gt = gt_binary
         
         # Приведение к целевому размеру
         if gt.shape != target_shape:
-            print(f"   📂 Изменение размера ground truth: {gt.shape} -> {target_shape}")
+            print(f"Изменение размера ground truth: {gt.shape} -> {target_shape}")
             gt = cv2.resize(gt, (target_shape[1], target_shape[0]), 
                           interpolation=cv2.INTER_NEAREST)
-            print(f"   📂 После изменения размера: shape={gt.shape}, "
+            print(f"После изменения размера: shape={gt.shape}, "
                   f"изменений={np.sum(gt > 0)} пикселей")
         
         return gt

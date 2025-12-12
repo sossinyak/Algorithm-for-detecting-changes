@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-12-12T12:06:36.174333",
+  "config": {
+    "preprocessing": {
+      "normalization": "histogram_matching",
+      "resize_method": "crop"
+    },
+    "detection": {
+      "cva": {
+        "magnitude_threshold": "otsu",
+        "manual_threshold": 0.1
+      },
+      "method": "cva",
+      "ratio_threshold": 0.3
+    },
+    "postprocessing": {
+      "filtering": {
+        "connectivity": 8,
+        "min_area_pixels": 50
+      },
+      "morphological": {
+        "kernel_size": 3,
+        "operations": [
+          "open",
+          "close"
+        ]
+      }
+    },
+    "evaluation": {
+      "metrics": [
+        "precision",
+        "recall",
+        "f1",
+        "iou"
+      ],
+      "save_report": true
+    }
+  },
+  "processed_images": {
+    "T1_shape": [
+      512,
+      512
+    ],
+    "T2_shape": [
+      512,
+      512
+    ]
+  },
+  "change_mask": "[[0 0 0 ... 0 0 0]\n [0 0 0 ... 0 0 0]\n [0 0 0 ... 0 0 0]\n ...\n [0 0 0 ... 0 0 0]\n [0 0 0 ... 0 0 0]\n [0 0 0 ... 0 0 0]]",
+  "detection_info": {
+    "method": "cva",
+    "threshold": 0.416015625,
+    "magnitude_range": [
+      0.0,
+      0.7843137383460999
+    ]
+  },
+  "metrics": {
+    "method": "cva",
+    "timestamp": "2025-12-12T12:06:36.174333",
+    "true_positives": 6195,
+    "false_positives": 6446,
+    "false_negatives": 7805,
+    "true_negatives": 241698,
+    "total_pixels": 262144,
+    "precision": 0.49007198797563484,
+    "recall": 0.4425,
+    "f1_score": 0.46507263240869334,
+    "iou": 0.30299325051354786,
+    "accuracy": 0.9456367492675781
+  }
+}
