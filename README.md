@@ -8,10 +8,10 @@ satellite_T1.png - снимок "до"
 
 satellite_T2.png - снимок "после"
 
-ground_truth.png - эталонная маска для оценки
+ground_truth.png - эталонная маска для оценки.
 
 
-Сравнение методов детекции
+Сравнение методов детекции:
 
 python run.py compare
 
