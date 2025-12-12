@@ -20,6 +20,8 @@ class ChangeDetector:
             return self._cva_method(img1, img2)
         elif self.method == 'ndbi_diff':
             return self._ndbi_method(img1, img2)
+        elif self.method == 'pca':
+            return self._pca_method(img1, img2)
         else:
             raise ValueError(f"Неизвестный метод: {self.method}")
     
@@ -109,4 +111,34 @@ class ChangeDetector:
             'threshold': float(threshold),
             'ndbi_range_t1': (float(ndbi1.min()), float(ndbi1.max())),
             'ndbi_range_t2': (float(ndbi2.min()), float(ndbi2.max()))
+        }
+    
+    def _pca_method(self, img1: np.ndarray, img2: np.ndarray) -> Tuple[np.ndarray, Dict]:
+        """PCA-based change detection - простейшая реализация"""
+        from sklearn.decomposition import PCA
+        
+        # Объединяем изображения
+        h, w = img1.shape
+        X = np.column_stack([img1.ravel(), img2.ravel()])
+        
+        # Применяем PCA с 2 компонентами
+        pca = PCA(n_components=2)
+        X_pca = pca.fit_transform(X)
+        
+        # Вторая компонента часто содержит изменения
+        changes = X_pca[:, 1].reshape(h, w)
+        
+        # Нормализация
+        changes_normalized = (changes - changes.min()) / (changes.max() - changes.min())
+        
+        # Пороговая обработка
+        from skimage.filters import threshold_otsu
+        threshold = threshold_otsu(changes_normalized * 255) / 255.0
+        
+        mask = (changes_normalized > threshold).astype(np.uint8) * 255
+        
+        return mask, {
+            'method': 'pca',
+            'threshold': float(threshold),
+            'explained_variance': pca.explained_variance_ratio_.tolist()
         }

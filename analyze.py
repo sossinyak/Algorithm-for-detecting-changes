@@ -19,47 +19,13 @@ def analyze_results(results_dir: str = "results", output_dir: str = "analysis"):
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True)
     
-    # Поиск файлов с метриками
-    json_files = list(results_path.rglob("metrics.json"))
-    csv_files = list(results_path.rglob("*.csv"))
-    
-    print(f"Найдено файлов: {len(json_files)} JSON, {len(csv_files)} CSV")
-    
-    # Загрузка данных из JSON файлов
-    all_data = []
-    
-    for json_file in json_files:
-        try:
-            with open(json_file, 'r') as f:
-                data = json.load(f)
-            
-            # Добавляем имя эксперимента
-            exp_name = json_file.parent.name
-            row = {'experiment': exp_name}
-            row.update(data)
-            all_data.append(row)
-            
-        except Exception as e:
-            print(f"Ошибка загрузки {json_file}: {e}")
-    
-    # Загрузка данных из CSV файлов
-    for csv_file in csv_files:
-        try:
-            df_csv = pd.read_csv(csv_file)
-            if not df_csv.empty:
-                # Добавляем имя файла как эксперимент
-                df_csv['experiment'] = csv_file.stem
-                all_data.extend(df_csv.to_dict('records'))
-        except Exception as e:
-            print(f"Ошибка загрузки {csv_file}: {e}")
-    
-    if not all_data:
-        print("Нет данных для анализа")
-        return
-    
     # Создание DataFrame
     df = pd.DataFrame(all_data)
-    print(f"\nЗагружено {len(df)} записей")
+
+    # Проверяем, что DataFrame не пустой
+    if df.empty:
+        print("DataFrame пустой. Нет данных для анализа.")
+        return
     
     # Сохранение объединенных данных
     combined_path = output_path / "all_results.csv"
@@ -73,7 +39,7 @@ def analyze_results(results_dir: str = "results", output_dir: str = "analysis"):
     if 'method' in df.columns and 'f1_score' in df.columns:
         # Группировка по методам
         stats = df.groupby('method').agg({
-            'f1_score': ['mean', 'std', 'min', 'max', 'count'],
+            'f1_score': ['mean', 'std', 'min', 'max'],
             'precision': ['mean', 'std', 'min', 'max'],
             'recall': ['mean', 'std', 'min', 'max'],
             'iou': ['mean', 'std', 'min', 'max']
@@ -84,12 +50,13 @@ def analyze_results(results_dir: str = "results", output_dir: str = "analysis"):
         
         # Сохранение статистики
         stats.to_csv(output_path / "statistics_by_method.csv")
+    else:
+        print("Нет данных по методам или метрикам для статистического анализа")
     
     # Визуализация
     create_visualizations(df, output_path)
     
-    print(f"АНАЛИЗ ЗАВЕРШЕН")
-    print(f"\nРезультаты сохранены в: {output_path}")
+    print(f"\nАНАЛИЗ ЗАВЕРШЕН")
     print("\n---------------------------------")
 
 def create_visualizations(df: pd.DataFrame, output_path: Path):
@@ -132,11 +99,11 @@ def create_visualizations(df: pd.DataFrame, output_path: Path):
         
         # Лучшие результаты
         if 'f1_score' in df.columns:
-            top_results = df.nlargest(5, 'f1_score')
+            top_results = df.nlargest(3, 'f1_score')
             bars = axes[1, 1].bar(range(len(top_results)), top_results['f1_score'])
             axes[1, 1].set_xticks(range(len(top_results)))
             axes[1, 1].set_xticklabels(top_results['method'], rotation=45)
-            axes[1, 1].set_title('Топ-5 результатов по F1-Score')
+            axes[1, 1].set_title('Топ-3 результатов по F1-Score')
             axes[1, 1].set_ylabel('F1-Score')
             axes[1, 1].set_ylim(0, 1)
             
@@ -162,12 +129,9 @@ def create_visualizations(df: pd.DataFrame, output_path: Path):
         plt.savefig(output_path / "correlation_matrix.png", dpi=150, bbox_inches='tight')
         plt.close()
         
-        print("\nКорреляционная матрица создана")
-        
-
 def main():
     parser = argparse.ArgumentParser(
-        description='Анализатор результатов экспериментов по обнаружению изменений',
+        description='Анализ результатов экспериментов по обнаружению изменений',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=""" Примеры использования:
                     python analyze.py                          # Анализ всех результатов
@@ -176,9 +140,9 @@ def main():
     )
     
     parser.add_argument('--results-dir', type=str, default='results',
-                       help='Директория с результатами (по умолчанию: results)')
+                       help='Директория с результатами')
     parser.add_argument('--output-dir', type=str, default='analysis',
-                       help='Директория для сохранения анализа (по умолчанию: analysis)')
+                       help='Директория для сохранения анализа')
     
     args = parser.parse_args()
     analyze_results(args.results_dir, args.output_dir)

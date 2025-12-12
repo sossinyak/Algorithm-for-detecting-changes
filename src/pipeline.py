@@ -35,23 +35,16 @@ class ChangeDetectionPipeline:
     def run(self, image1_path: str, image2_path: str,ground_truth_path: Optional[str] = None) -> Dict:
         """Запуск полного конвейера обработки"""
 
-        print("\nЗАПУСК КОНВЕЙЕРА ОБНАРУЖЕНИЯ ИЗМЕНЕНИЙ")
-        
         # Загрузка изображений
         img1 = self._load_image(image1_path)
         img2 = self._load_image(image2_path)
-        print(f"\nЗагрузка изображений:")
-        print(f"T1: {img1.shape}, диапазон: [{img1.min()}, {img1.max()}]")
-        print(f"T2: {img2.shape}, диапазон: [{img2.min()}, {img2.max()}]")
-        
+
         # Предобработка
         from preprocessing import ImagePreprocessor
         preprocessor = ImagePreprocessor(self.config.preprocessing)
 
         img1_proc, img2_proc = preprocessor.process_pair(img1, img2)
-        print(f"\nПредобработка:")
-        print(f"Размер после обработки: {img1_proc.shape}")
-        
+
         # Детекция изменений
         from detection import ChangeDetector
         
@@ -60,7 +53,7 @@ class ChangeDetectionPipeline:
             params=self.config.detection
         )
         change_mask, detection_info = detector.detect(img1_proc, img2_proc)
-        print(f"\nДетекция изменений:")
+        print(f"--------------------------------")
         print(f"Метод: {detection_info['method']}")
         print(f"Процент изменений: {np.sum(change_mask > 0) / change_mask.size * 100:.2f}%")
         
@@ -76,11 +69,7 @@ class ChangeDetectionPipeline:
 
             evaluator = ChangeDetectionEvaluator()
             metrics = evaluator.compute_metrics(final_mask, gt_mask, self.config.detection['method'])
-            print(f"\nОценка результатов:")
-            print(f"F1-Score: {metrics['f1_score']:.3f}")
-            print(f"Precision: {metrics['precision']:.3f}")
-            print(f"Recall: {metrics['recall']:.3f}")
-        
+
         # Сохранение результатов
         self.results = {
             'timestamp': datetime.now().isoformat(),
@@ -106,27 +95,16 @@ class ChangeDetectionPipeline:
     def _load_ground_truth(self, gt_path: str, target_shape: Tuple) -> np.ndarray:
         """Загрузка ground truth маски"""
         gt = self._load_image(gt_path)
-        print(f"Загружен ground truth: shape={gt.shape}, "
-              f"min={gt.min()}, max={gt.max()}, "
-              f"изменений={np.sum(gt > 0)} пикселей")
-        
+
         # Приведение к бинарному формату
         if gt.max() > 1:
-            print(f"Конвертация в бинарный формат")
             gt_binary = (gt > 127).astype(np.uint8) * 255
-            print(f"После бинаризации: min={gt_binary.min()}, "
-                  f"max={gt_binary.max()}, "
-                  f"изменений={np.sum(gt_binary > 0)} пикселей")
             gt = gt_binary
         
         # Приведение к целевому размеру
         if gt.shape != target_shape:
-            print(f"Изменение размера ground truth: {gt.shape} -> {target_shape}")
             gt = cv2.resize(gt, (target_shape[1], target_shape[0]), 
                           interpolation=cv2.INTER_NEAREST)
-            print(f"После изменения размера: shape={gt.shape}, "
-                  f"изменений={np.sum(gt > 0)} пикселей")
-        
         return gt
     
     def _postprocess_mask(self, mask: np.ndarray) -> np.ndarray:
@@ -177,22 +155,8 @@ class ChangeDetectionPipeline:
         if 'change_mask' in self.results:
             mask_path = output_path / "change_mask.png"
             cv2.imwrite(str(mask_path), self.results['change_mask'])
-            print(f"\nМаска сохранена: {mask_path}")
-        
-        # Сохранение конфигурации
-        config_path = output_path / "config.json"
-        with open(config_path, 'w') as f:
-            json.dump(asdict(self.config), f, indent=2, default=str)
-        
-        # Сохранение метрик
-        if self.results.get('metrics'):
-            metrics_path = output_path / "metrics.json"
-            with open(metrics_path, 'w') as f:
-                json.dump(self.results['metrics'], f, indent=2)
-        
-        # Сохранение полного отчета
+
+        # Сохранение отчета
         report_path = output_path / "report.json"
         with open(report_path, 'w') as f:
             json.dump(self.results, f, indent=2, default=str)
-        
-        print(f"\nРезультаты сохранены в: {output_path}")

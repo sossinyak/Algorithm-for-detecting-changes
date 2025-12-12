@@ -110,12 +110,19 @@ class ResultVisualizer:
         
         fig.savefig(output_path, dpi=dpi, bbox_inches='tight')
         plt.close(fig)
-        print(f"Визуализация сохранена: {output_path}")
     
     @staticmethod
     def create_comparison_plot(results_df: pd.DataFrame, output_path: str):
         """Создание графика сравнения методов"""
+        # Проверяем, что DataFrame не пустой
+        if results_df is None or results_df.empty:
+            print(f"Нет данных для создания графика сравнения")
+            return
+
         # Проверяем, есть ли нужные колонки
+        if 'method' not in results_df.columns:
+            print(f"В DataFrame нет колонки 'method'")
+            return
         required_columns = ['f1_score', 'precision', 'recall', 'iou']
         
         # Проверяем, какие колонки есть в DataFrame
@@ -186,4 +193,3 @@ class ResultVisualizer:
         plt.tight_layout()
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close()
-        print(f"График сравнения сохранен: {output_path}")

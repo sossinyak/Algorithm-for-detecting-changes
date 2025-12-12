@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict
 
 class ImagePreprocessor:
     """Модуль предобработки изображений"""

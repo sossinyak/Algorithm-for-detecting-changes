@@ -1,0 +1,63 @@
+ОТЧЕТ ПО ЭКСПЕРИМЕНТАМ
+
+Всего экспериментов: 135
+
+ТОП-5 ЛУЧШИХ РЕЗУЛЬТАТОВ (по F1-Score)
+----------------------------------------------------------------------
+1. exp_123:
+   Метод: pca
+   F1-Score: 0.5982
+   Precision: 1.0000
+   Recall: 0.4268
+   IoU: 0.4268
+   Параметры: {'detection.method': 'pca', 'detection.cva.manual_threshold': 0.3, 'detection.ratio_threshold': 0.4, 'postprocessing.filtering.min_area_pixels': 0}
+
+2. exp_126:
+   Метод: pca
+   F1-Score: 0.5982
+   Precision: 1.0000
+   Recall: 0.4268
+   IoU: 0.4268
+   Параметры: {'detection.method': 'pca', 'detection.cva.manual_threshold': 0.4, 'detection.ratio_threshold': 0.2, 'postprocessing.filtering.min_area_pixels': 0}
+
+3. exp_129:
+   Метод: pca
+   F1-Score: 0.5982
+   Precision: 1.0000
+   Recall: 0.4268
+   IoU: 0.4268
+   Параметры: {'detection.method': 'pca', 'detection.cva.manual_threshold': 0.4, 'detection.ratio_threshold': 0.3, 'postprocessing.filtering.min_area_pixels': 0}
+
+4. exp_111:
+   Метод: pca
+   F1-Score: 0.5982
+   Precision: 1.0000
+   Recall: 0.4268
+   IoU: 0.4268
+   Параметры: {'detection.method': 'pca', 'detection.cva.manual_threshold': 0.2, 'detection.ratio_threshold': 0.3, 'postprocessing.filtering.min_area_pixels': 0}
+
+5. exp_114:
+   Метод: pca
+   F1-Score: 0.5982
+   Precision: 1.0000
+   Recall: 0.4268
+   IoU: 0.4268
+   Параметры: {'detection.method': 'pca', 'detection.cva.manual_threshold': 0.2, 'detection.ratio_threshold': 0.4, 'postprocessing.filtering.min_area_pixels': 0}
+
+СТАТИСТИКА ПО МЕТОДАМ
+----------------------------------------------------------------------
+                    f1_score                               precision          recall        
+                        mean     std     min     max count      mean     std    mean     std
+detection_method                                                                            
+absolute_difference   0.4495  0.0041  0.4466  0.4552    27    0.4787  0.0020  0.4236  0.0058
+cva                   0.4495  0.0041  0.4466  0.4552    27    0.4787  0.0020  0.4236  0.0058
+ndbi_difference       0.4495  0.0041  0.4466  0.4552    27    0.4787  0.0020  0.4236  0.0058
+pca                   0.5913  0.0050  0.5878  0.5982    27    1.0000  0.0000  0.4197  0.0051
+ratio_image           0.5766  0.0008  0.5749  0.5772    27    0.5609  0.0026  0.5933  0.0015
+
+КОРРЕЛЯЦИЯ ПАРАМЕТРОВ С F1-SCORE
+----------------------------------------------------------------------
+threshold                                :  0.4968
+postprocessing.filtering.min_area_pixels : -0.0432
+detection.ratio_threshold                :  0.0001
+detection.cva.manual_threshold           : -0.0000
