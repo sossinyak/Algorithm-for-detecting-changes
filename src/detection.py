@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from skimage.filters import threshold_otsu, threshold_yen
-from typing import Tuple, Dict
+from typing import Tuple, Dict 
 
 class ChangeDetector:
     """Класс для детекции изменений различными методами"""
@@ -22,6 +22,8 @@ class ChangeDetector:
             return self._ndbi_method(img1, img2)
         elif self.method == 'pca':
             return self._pca_method(img1, img2)
+        elif self.method == 'cascade':
+            return self._cascade_method(img1, img2)
         else:
             raise ValueError(f"Неизвестный метод: {self.method}")
     
@@ -114,7 +116,7 @@ class ChangeDetector:
         }
     
     def _pca_method(self, img1: np.ndarray, img2: np.ndarray) -> Tuple[np.ndarray, Dict]:
-        """PCA-based change detection - простейшая реализация"""
+        """PCA-based change detection"""
         from sklearn.decomposition import PCA
         
         # Объединяем изображения
@@ -142,3 +144,115 @@ class ChangeDetector:
             'threshold': float(threshold),
             'explained_variance': pca.explained_variance_ratio_.tolist()
         }
+    
+    # Добавим в detection.py новый метод _cascade_method
+    def _cascade_method(self, img1: np.ndarray, img2: np.ndarray) -> Tuple[np.ndarray, Dict]:
+        """Каскадный метод с CLAHE, многоуровневой фильтрацией и контурным анализом"""
+
+        # 1. CLAHE для адаптивного контрастирования
+        clahe = cv2.createCLAHE(
+            clipLimit=self.params.get('clahe_clip_limit', 2.0),
+            tileGridSize=self.params.get('clahe_grid_size', (8, 8))
+        )
+
+        img1_clahe = clahe.apply((img1 * 255).astype(np.uint8) if img1.max() <= 1 else img1.astype(np.uint8))
+        img2_clahe = clahe.apply((img2 * 255).astype(np.uint8) if img2.max() <= 1 else img2.astype(np.uint8))
+
+        # 2. Многоуровневая фильтрация (Гаусс + медианная)
+        # Гауссово размытие для уменьшения шума
+        gauss_kernel = self.params.get('gauss_kernel', (5, 5))
+        img1_gauss = cv2.GaussianBlur(img1_clahe, gauss_kernel, 0)
+        img2_gauss = cv2.GaussianBlur(img2_clahe, gauss_kernel, 0)
+
+        # Медианная фильтрация для сохранения границ
+        median_kernel = self.params.get('median_kernel', 3)
+        img1_filtered = cv2.medianBlur(img1_gauss, median_kernel)
+        img2_filtered = cv2.medianBlur(img2_gauss, median_kernel)
+
+        # 3. Разностное изображение с адаптивной нормализацией
+        diff = cv2.absdiff(img2_filtered, img1_filtered)
+
+        # 4. Контурный анализ (оператор Кэнни)
+        # Находим контуры на обоих изображениях
+        edges1 = cv2.Canny(img1_filtered, 
+                          threshold1=self.params.get('canny_low', 50),
+                          threshold2=self.params.get('canny_high', 150))
+        edges2 = cv2.Canny(img2_filtered, 
+                          threshold1=self.params.get('canny_low', 50),
+                          threshold2=self.params.get('canny_high', 150))
+
+        # Объединение контуров
+        combined_edges = cv2.bitwise_or(edges1, edges2)
+
+        # 5. Комбинирование разностного изображения с контурами
+        # Нормализация разности
+        diff_norm = cv2.normalize(diff, None, 0, 255, cv2.NORM_MINMAX)
+
+        # Усиление областей с контурами
+        edge_weight = self.params.get('edge_weight', 1.5)
+        enhanced_diff = diff_norm.copy().astype(np.float32)
+        enhanced_diff[combined_edges > 0] *= edge_weight
+
+        # 6. Адаптивная пороговая обработка
+        # Используем метод Отсу для автоматического выбора порога
+        enhanced_diff_8bit = enhanced_diff.astype(np.uint8)
+
+        # Применяем несколько пороговых методов и комбинируем результаты
+        otsu_thresh, otsu_mask = cv2.threshold(enhanced_diff_8bit, 0, 255, 
+                                               cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # Адаптивный порог для разных областей изображения
+        adaptive_mask = cv2.adaptiveThreshold(enhanced_diff_8bit, 255,
+                                             cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                             cv2.THRESH_BINARY, 
+                                             self.params.get('adaptive_block_size', 11),
+                                             self.params.get('adaptive_c', 2))
+
+        # 7. Комбинирование масок
+        combined_mask = cv2.bitwise_and(otsu_mask, adaptive_mask)
+
+        # 8. Морфологическая постобработка
+        # Открытие для удаления мелкого шума
+        kernel_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, 
+                                              (self.params.get('open_kernel', 3), 
+                                               self.params.get('open_kernel', 3)))
+        cleaned_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_OPEN, kernel_open)
+
+        # Закрытие для заполнения небольших разрывов
+        kernel_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, 
+                                               (self.params.get('close_kernel', 5), 
+                                                self.params.get('close_kernel', 5)))
+        final_mask = cv2.morphologyEx(cleaned_mask, cv2.MORPH_CLOSE, kernel_close)
+
+        # 9. Фильтрация по минимальной площади
+        min_area = self.params.get('min_area', 50)
+        if min_area > 0:
+            # Находим компоненты связности
+            num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+                final_mask, connectivity=8
+            )
+
+            # Создаем чистую маску с учетом минимальной площади
+            filtered_mask = np.zeros_like(final_mask)
+            for i in range(1, num_labels):  # Пропускаем фон (0)
+                if stats[i, cv2.CC_STAT_AREA] >= min_area:
+                    filtered_mask[labels == i] = 255
+            
+            final_mask = filtered_mask
+        
+        return final_mask, {
+            'method': 'cascade_clahe_filter_canny',
+            'parameters': {
+                'clahe_clip_limit': self.params.get('clahe_clip_limit', 2.0),
+                'clahe_grid_size': self.params.get('clahe_grid_size', (8, 8)),
+                'gauss_kernel': gauss_kernel,
+                'median_kernel': median_kernel,
+                'canny_thresholds': (self.params.get('canny_low', 50), 
+                                    self.params.get('canny_high', 150)),
+                'edge_weight': edge_weight,
+                'adaptive_block_size': self.params.get('adaptive_block_size', 11),
+                'otsu_threshold': float(otsu_thresh)
+            },
+            'change_percentage': np.sum(final_mask > 0) / final_mask.size * 100
+        }
+    

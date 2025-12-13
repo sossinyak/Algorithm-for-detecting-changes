@@ -6,7 +6,7 @@ def create_test_images():
     """Создание тестовых данных"""
     try:
         # Создаем простые тестовые изображения
-        data_dir = Path("data/satellite_images")
+        data_dir = Path("data/satellite")
         data_dir.mkdir(parents=True, exist_ok=True)
         
         # Создаем тестовое изображение T1
@@ -27,21 +27,16 @@ def create_test_images():
         img2 = np.clip(img2.astype(np.int16) + noise, 0, 255).astype(np.uint8)
         
         # Сохраняем
-        cv2.imwrite(str(data_dir / "satellite_T1.png"), img1)
-        cv2.imwrite(str(data_dir / "satellite_T2.png"), img2)
-        
-        print(f"Тестовые данные созданы в {data_dir}/")
-        print(f"  satellite_T1.png: {img1.shape}")
-        print(f"  satellite_T2.png: {img2.shape}")
+        cv2.imwrite(str(data_dir / "T1.png"), img1)
+        cv2.imwrite(str(data_dir / "T2.png"), img2)
         
         # Создаем простой ground truth
         gt = np.zeros((512, 512), dtype=np.uint8)
         gt[250:350, 250:350] = 255  # Сдвинутый квадрат
         gt[100:150, 100:150] = 255   # Новый квадрат
         gt[50:80, 300:350] = 255     # Новый маленький объект
-        cv2.imwrite(str(data_dir / "ground_truth.png"), gt)
-        print(f"  ground_truth.png: Создан для тестирования")
-        
+        cv2.imwrite(str(data_dir / "GT.png"), gt)
+
         return img1, img2
         
     except Exception as e:

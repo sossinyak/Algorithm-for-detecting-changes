@@ -3,7 +3,7 @@ import seaborn as sns
 import numpy as np
 import cv2
 from pathlib import Path
-from typing import Optional, Tuple, Dict, List
+from typing import Optional
 import pandas as pd
 
 class ResultVisualizer:
